@@ -1,0 +1,428 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Hockeykalender</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: Eisfläche als Grund, Kopf mit blauer Linie, Filterleiste, Termine nach Monat wie ein Spielplan */
+:root{
+  --bg:#edf2f5; --surface:#ffffff; --surface-2:#f5f8fa; --ink:#0f1d2b; --muted:#566779; --line:#d5dfe7;
+  --red:#c42f2a; --blue:#1d5ca6; --blue-soft:#e3edf8; --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#b0261f; --bad-soft:#fbe5e3; --ok:#1f7a45; --ok-soft:#e1f3e8;
+  /* Nur Systemschriften: keine Schriften von fremden Servern laden (Datenschutz) */
+  --f-display:"Bahnschrift","DIN Condensed","Avenir Next Condensed","Roboto Condensed","Arial Narrow","Franklin Gothic Medium",Impact,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1219; --surface:#121c27; --surface-2:#172331; --ink:#e6eef5; --muted:#93a5b7; --line:#24364a;
+  --red:#ff6f66; --blue:#7fb2ff; --blue-soft:#17304d; --warn:#f2b552; --warn-soft:#3a2a10; --bad:#ff8a80; --bad-soft:#3d1a18; --ok:#6fd49a; --ok-soft:#123323; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1219; --surface:#121c27; --surface-2:#172331; --ink:#e6eef5; --muted:#93a5b7; --line:#24364a;
+  --red:#ff6f66; --blue:#7fb2ff; --blue-soft:#17304d; --warn:#f2b552; --warn-soft:#3a2a10; --bad:#ff8a80; --bad-soft:#3d1a18; --ok:#6fd49a; --ok-soft:#123323; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{border-bottom:3px solid var(--blue);background:var(--surface)}
+header.top .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,44px);line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+h1 span{color:var(--red)}
+.sub{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.stand{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.filters{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.filters .wrap{padding-block:12px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.filters label{display:flex;flex-direction:column;gap:3px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;min-width:0}
+.filters input[type=date]{min-height:35px}
+.filters select,.filters input[type=search],.filters input[type=date]{font:inherit;font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 8px;width:100%;min-width:0}
+.filters .search{grid-column:span 2}
+.filters label[for=fAnb]{grid-column:span 2}
+.tg{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tg .tl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;min-width:92px}
+.tb{font:inherit;font-size:14px;font-weight:600;line-height:1;padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums;min-height:38px}
+.tb small{font-weight:400;color:var(--muted);margin-left:4px;font-size:12px}
+.tb:hover{border-color:var(--blue)}
+.tb[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:var(--surface)}
+.tb[aria-pressed=true] small{color:inherit;opacity:.85}
+.filters .row2{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:13px;color:var(--muted)}
+.filters .row2 label{flex-direction:row;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400}
+.count{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+button.reset{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--blue);border-radius:6px;padding:4px 10px;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+@media (max-width:760px){.filters{position:static}.filters .wrap{grid-template-columns:repeat(2,minmax(0,1fr))}.filters .search{grid-column:1/-1}.count{margin-left:0}.tg .tl{min-width:0;flex-basis:100%}.tb{padding:9px 12px}}
+main .wrap{padding-block:18px 40px;display:flex;flex-direction:column;gap:36px}
+h2{font-family:var(--f-display);font-weight:700;font-size:26px;margin:0 0 4px;letter-spacing:.01em}
+.h2note{color:var(--muted);margin:0 0 14px;font-size:14px;max-width:70ch}
+.month{font-family:var(--f-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;color:var(--blue);margin:22px 0 8px;display:flex;align-items:center;gap:10px}
+.month::after{content:"";flex:1;height:1px;background:var(--line)}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.full{opacity:.72}
+.chead{display:flex;gap:10px;align-items:flex-start}
+.date{flex:none;font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1.1;text-align:center;border:1px solid var(--line);border-radius:6px;padding:5px 7px;min-width:62px;font-variant-numeric:tabular-nums;background:var(--surface-2)}
+.date small{display:block;font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.04em}
+.ctitle{min-width:0}
+.ctitle h3{margin:0;font-size:16px;line-height:1.25;font-weight:700;overflow-wrap:anywhere}
+.ctitle .who{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.chip.land{background:var(--blue-soft);border-color:transparent;color:var(--blue)}
+.chip.ak{font-variant-numeric:tabular-nums}
+.chip.pos{background:var(--ink);color:var(--surface);border-color:transparent}
+.chip.full{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.chip.wait{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.free{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:0;font-size:13.5px}
+dt{color:var(--muted)}
+dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+dd.na{color:var(--muted);font-style:italic}
+.notiz{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;overflow-wrap:anywhere}
+a.go{font-size:13.5px;font-weight:600;color:var(--blue);text-decoration:none;align-self:flex-start}
+a.go:hover{text-decoration:underline}
+.empty{color:var(--muted);padding:16px;border:1px dashed var(--line);border-radius:8px;background:var(--surface)}
+.ohne{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px}
+.ohne .card{gap:4px;padding:10px 12px}
+footer{border-top:3px solid var(--red);background:var(--surface)}
+footer .wrap{padding-block:22px 34px;display:flex;flex-direction:column;gap:14px;font-size:13.5px;color:var(--muted)}
+footer h2{font-size:20px;color:var(--ink)}
+.prov{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.prov h4{margin:0 0 4px;font-family:var(--f-display);font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.prov ul{margin:0;padding-left:16px}
+.camps ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:6px}
+.camps li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.camps button.cn{font:inherit;font-weight:600;color:var(--blue);background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.camps button.cn:hover{text-decoration:underline}
+.camps .cc{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.camps a{font-size:12.5px;color:var(--blue)}
+#campanbieter .prov h4{margin:0 0 6px;font-family:var(--f-display);font-size:15px;letter-spacing:.08em;text-transform:uppercase}
+details summary{cursor:pointer;color:var(--ink);font-weight:600}
+details ul{padding-left:16px;overflow-wrap:anywhere}
+.ak-legend{font-variant-numeric:tabular-nums}
+.legal p{margin:10px 0 0;max-width:72ch}.legal h3{margin:18px 0 0;font-family:var(--f-display);font-size:18px;color:var(--ink)}.legal strong{color:var(--ink)}.legal a{color:var(--blue)}
+/* Beobachten: Glocke je Eintrag, Merkliste nur auf dem eigenen Gerät */
+.chead .ctitle{flex:1}
+.hrow{display:flex;gap:8px;align-items:flex-start}.hrow .ctitle{flex:1}
+button.bell{flex:none;font:inherit;font-size:13px;font-weight:600;line-height:1;display:inline-flex;align-items:center;gap:4px;padding:6px 9px;min-height:32px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;white-space:nowrap}
+button.bell:hover{border-color:var(--blue);color:var(--blue)}
+button.bell[aria-pressed=true]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+button.bell svg{width:15px;height:15px}
+.card.watched{border-color:var(--warn);box-shadow:inset 3px 0 0 var(--warn)}
+/* Kürzere Seite: eingeklappte Abschnitte, Termine seitenweise, Impressum-Link, nach-oben-Knopf */
+.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:4px 0}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary h2{margin:0}
+.sec>summary::after{content:"";width:9px;height:9px;flex:none;border-right:2.5px solid var(--blue);border-bottom:2.5px solid var(--blue);transform:rotate(-45deg);margin-left:2px;transition:transform .15s}
+.sec[open]>summary::after{transform:rotate(45deg)}
+.sec>summary .n{font-weight:600;color:var(--muted);font-size:.8em}
+.sec[open]>summary{margin-bottom:6px}
+.more{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px;font-size:13.5px;color:var(--muted)}
+.more button{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;min-height:40px;border-radius:999px;border:1.5px solid var(--blue);background:var(--surface);color:var(--blue);cursor:pointer}
+.more button.all{border-color:var(--line);color:var(--ink)}
+.toplinks{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.toplinks a{font-size:13px;color:var(--blue);font-weight:600;text-decoration:none;padding:4px 0}
+.toplinks a:hover{text-decoration:underline}
+@media (max-width:560px){.toplinks{align-items:flex-start}}
+#toTop{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;width:46px;height:46px;border-radius:50%;border:0;background:var(--blue);color:var(--surface);font-size:20px;line-height:1;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s}
+#toTop.show{opacity:1;pointer-events:auto}
+.chip.lauf{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.tryout{background:var(--red);color:var(--surface);border-color:transparent}
+.chip.soon{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.filters .row2 .watchbar{display:none}
+.filters.watchon .row2 .watchbar{display:flex}
+#watchMsg{font-size:12.5px;color:var(--bad)}
+/* Kalender-Export je Termin */
+.cal{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:center;font-size:12.5px;color:var(--muted)}
+.cal a{font:inherit;font-weight:600;color:var(--blue);background:none;border:0;padding:6px 0;min-height:30px;cursor:pointer;text-decoration:none}
+.cal a:hover{text-decoration:underline}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}.card:hover{border-color:var(--blue)}}
+/* Sportlicher Look: kantige Schrift in Großbuchstaben, schräg gestellt, Tempo-Streifen, dunkler Kopf (nur Systemschriften) */
+:root{--hdr-bg:#0b2447;--hdr-bg2:#123a73;--hdr-ink:#ffffff;--hdr-mute:#b9c9e0;--hdr-accent:#ff5a4f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--hdr-bg:#07121f;--hdr-bg2:#0d2342}}
+:root[data-theme="dark"]{--hdr-bg:#07121f;--hdr-bg2:#0d2342}
+header.top{background:linear-gradient(115deg,var(--hdr-bg) 0 62%,var(--hdr-bg2) 62% 100%);border-bottom:4px solid var(--red);position:relative;overflow:hidden}
+header.top::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:150px;background:repeating-linear-gradient(115deg,transparent 0 14px,rgba(255,255,255,.07) 14px 22px);pointer-events:none}
+header.top .wrap{position:relative;z-index:1;padding-block:26px 22px}
+h1{font-weight:900;font-style:italic;text-transform:uppercase;font-stretch:75%;letter-spacing:.015em;font-size:clamp(24px,7vw,62px);white-space:nowrap;line-height:.95;color:var(--hdr-ink);text-shadow:0 2px 0 rgba(0,0,0,.25);overflow-wrap:normal}
+h1 .logo{display:inline-block;width:.92em;height:.92em;margin-right:.24em;vertical-align:-.1em;flex:none}
+h1 span{color:var(--hdr-accent)}
+.sub{color:var(--hdr-mute);font-size:14.5px;margin-top:10px}
+.stand{color:var(--hdr-mute)}
+.toplinks a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+h2{font-weight:800;font-style:italic;text-transform:uppercase;font-stretch:75%;letter-spacing:.03em;font-size:30px;position:relative;padding-left:16px}
+h2::before{content:"";position:absolute;left:0;top:.12em;bottom:.12em;width:6px;background:linear-gradient(var(--red),var(--red));transform:skewX(-14deg);border-radius:1px}
+.sec>summary h2{padding-left:16px}
+.month{font-style:italic;font-weight:800;font-size:17px;letter-spacing:.14em}
+.date{font-style:italic;font-weight:800;font-size:16px;background:var(--blue-soft);border-color:transparent;color:var(--ink);border-left:4px solid var(--red);border-radius:4px}
+.ctitle h3{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:18.5px;letter-spacing:.01em;line-height:1.2}
+.tb{font-family:var(--f-display);font-stretch:85%;text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:14.5px;font-style:italic;border-radius:6px;padding:9px 15px}
+.tb small{font-style:normal;text-transform:none;letter-spacing:0}
+.tb[aria-pressed=true]{box-shadow:inset 0 -3px 0 var(--red)}
+.chip{border-radius:4px;text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+.chip.ak{font-style:italic}
+.prov h4,#campanbieter .prov h4{font-style:italic;font-weight:800}
+.more button{font-family:var(--f-display);font-stretch:85%;text-transform:uppercase;font-style:italic;letter-spacing:.06em;border-radius:6px}
+</style>
+
+<header class="top"><div class="wrap">
+  <div>
+    <h1><svg class="logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect x="4" y="8" width="56" height="52" rx="7" fill="#fff"/><path d="M4 15a7 7 0 0 1 7-7h42a7 7 0 0 1 7 7v7H4z" fill="#ff5a4f"/><rect x="17" y="3" width="6" height="13" rx="3" fill="#0b2447" stroke="#fff" stroke-width="2"/><rect x="41" y="3" width="6" height="13" rx="3" fill="#0b2447" stroke="#fff" stroke-width="2"/><g transform="translate(7 0) skewX(-10)" fill="#0b2447"><rect x="12" y="28" width="5" height="26"/><rect x="23" y="28" width="5" height="26"/><rect x="12" y="38.5" width="16" height="5"/><rect x="33" y="28" width="5" height="26"/><polygon points="38,42 47,28 53,28 43,44"/><polygon points="39,38 54,54 47.5,54 36,44" fill="#ff5a4f"/></g></svg>Hockey<span>kalender</span></h1>
+    <p class="sub">Camps, Tryouts, Trainings und Turniere für den Eishockey-Nachwuchs in Deutschland, Österreich, der Schweiz und Tschechien.</p>
+  </div>
+  <div class="toplinks"><div class="stand" id="standTop"></div><a href="#impressum" id="impLink">Impressum · Datenschutz</a></div>
+</div></header>
+
+<div class="filters"><div class="wrap">
+  <div class="tg" role="group" aria-label="Altersklasse"><span class="tl">Altersklasse</span><div id="gAk" style="display:contents"></div></div>
+  <div class="tg" role="group" aria-label="Land"><span class="tl">Land</span><button type="button" class="tb" data-land="" aria-pressed="true">Alle</button><button type="button" class="tb" data-land="DE" aria-pressed="false">Deutschland</button><button type="button" class="tb" data-land="AT" aria-pressed="false">Österreich</button><button type="button" class="tb" data-land="CH" aria-pressed="false">Schweiz</button><button type="button" class="tb" data-land="CZ" aria-pressed="false">Tschechien</button></div>
+  <div class="tg" role="group" aria-label="Angebot"><span class="tl">Angebot</span><button type="button" class="tb" data-kat="" aria-pressed="true">Alle</button><button type="button" class="tb" data-kat="C" aria-pressed="false">Camps</button><button type="button" class="tb" data-kat="O" aria-pressed="false">Tryouts</button><button type="button" class="tb" data-kat="F" aria-pressed="false">Freies Training</button><button type="button" class="tb" data-kat="L" aria-pressed="false">Laufschule</button><button type="button" class="tb" data-kat="T" aria-pressed="false">Turniere</button></div>
+  <div class="tg" role="group" aria-label="Position"><span class="tl">Position</span><button type="button" class="tb" data-pos="" aria-pressed="true">Alle</button><button type="button" class="tb" data-pos="F" aria-pressed="false">Feldspieler</button><button type="button" class="tb" data-pos="G" aria-pressed="false">Goalies</button></div>
+  <label for="fAnb">Anbieter<select id="fAnb"><option value="">Alle</option></select></label>
+  <label class="search" for="fQ">Suche<input id="fQ" type="search" placeholder="Ort, Titel, Anbieter, Goalie …" autocomplete="off"></label>
+  <label for="fVon">Zeitraum von<input id="fVon" type="date"></label>
+  <label for="fBis">Zeitraum bis<input id="fBis" type="date"></label>
+  <div class="row2">
+    <label for="fFull"><input id="fFull" type="checkbox"> Ausgebuchte ausblenden</label>
+    <label for="fNoJg"><input id="fNoJg" type="checkbox" checked> Einträge ohne Altersangabe zeigen</label>
+    <label for="fWatch" class="watchbar"><input id="fWatch" type="checkbox"> Nur beobachtete <span id="watchN"></span></label>
+    <span id="watchMsg" role="status"></span>
+    <button class="reset" id="reset" type="button">Filter zurücksetzen</button>
+    <span class="count" id="count"></span>
+  </div>
+</div></div>
+
+<main><div class="wrap">
+  <section id="termine"><h2>Termine</h2><p class="h2note">Nach Datum sortiert. Vergangene Termine verschwinden automatisch. „nicht angegeben“ heißt, dass der Anbieter dazu nichts veröffentlicht hat.</p><div id="tl"></div></section>
+  <details id="laufend" class="sec"><summary><h2>Laufend buchbare Trainings <span class="n" id="nLL"></span></h2></summary><p class="h2note">Regelmäßige Trainings, Hockeyschulen und Privatstunden ohne festen Einzeltermin.</p><div class="list" id="ll"></div></details>
+  <details id="ohne" class="sec"><summary><h2>Nächster Termin noch nicht veröffentlicht <span class="n" id="nOL"></span></h2></summary><p class="h2note">Anbieter mit Camps oder Kursen, deren nächste Termine noch nicht online stehen.</p><div class="ohne" id="ol"></div></details>
+  <details id="campanbieter" class="sec"><summary><h2>Alle Camp-Anbieter <span class="n" id="nCP"></span></h2></summary><p class="h2note">Alle erfassten Anbieter mit Camps, nach Land sortiert. Ein Klick auf den Namen zeigt oben nur die Camps dieses Anbieters. Anbieter ohne aktuellen Termin stehen mit „Termine folgen“ in der Liste.</p><div class="prov camps" id="campProv"></div></details>
+</div></main>
+<button type="button" id="toTop" aria-label="Nach oben" title="Nach oben">↑</button>
+
+<footer><div class="wrap">
+  <details class="sec" id="alleAnbieter"><summary><h2>Erfasste Anbieter <span class="n" id="nPV"></span></h2></summary><div class="prov" id="prov"></div></details>
+  <p class="ak-legend"><strong>Altersklassen Saison 2026/27:</strong> U9 2018–19 · U11 2016–17 · U13 2014–15 · U15 2012–13 · U17 2010–11 · U20 2007–09. Ab Saison 2027/28 verschieben sich alle Klassen um ein Jahr.</p>
+  <p>Position: Ein Angebot gilt als Goalie-Angebot, wenn es sich laut Titel oder Art nur an Torhüter richtet, und als „Feldspieler & Goalie“, wenn der Anbieter Goalies ausdrücklich mit aufnimmt. Alle anderen Angebote erscheinen unter Feldspieler, auch wenn der Anbieter die Position nicht nennt.</p>
+  <p id="standFoot"></p>
+  <details id="impressum" class="legal"><summary>Impressum und Datenschutz</summary>
+    <h3>Impressum</h3>
+    <p><strong>Angaben gemäß § 5 DDG</strong><br>Christian Jäger<br>Buch 3<br>88285 Bodnegg<br>Deutschland</p>
+    <p><strong>Kontakt</strong><br>E-Mail: <a href="mailto:eiskalender@proton.me">eiskalender@proton.me</a></p>
+    <p><strong>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</strong><br>Christian Jäger, Anschrift wie oben</p>
+    <p><strong>Über dieses Angebot</strong><br>Der Hockeykalender ist ein privates, nicht kommerzielles Informationsangebot für Eltern und Nachwuchsspieler im Eishockey. Er wird ehrenamtlich betrieben und ist kostenlos. Es besteht keine geschäftliche Verbindung zu den aufgeführten Anbietern, Vereinen oder Verbänden.</p>
+    <p><strong>Haftung für Inhalte</strong><br>Alle Angaben zu Terminen, Preisen, freien Plätzen und Anmeldefristen stammen von den verlinkten Seiten der Veranstalter. Sie werden regelmäßig und teilweise automatisiert zusammengetragen. Trotz sorgfältiger Prüfung kann keine Gewähr für Richtigkeit, Vollständigkeit und Aktualität übernommen werden. Maßgeblich sind immer die Angaben auf der Seite des jeweiligen Veranstalters. Bitte prüfe sie dort vor einer Anmeldung oder Buchung.</p>
+    <p><strong>Haftung für Links</strong><br>Dieses Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte kein Einfluss besteht. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar. Werden Rechtsverletzungen bekannt, werden die betreffenden Links umgehend entfernt.</p>
+    <p><strong>Hinweise an Veranstalter</strong><br>Du bist Veranstalter und möchtest einen Eintrag korrigieren, ergänzen oder entfernen lassen? Schreib bitte eine kurze E-Mail an die oben genannte Adresse. Berechtigte Anliegen werden zeitnah umgesetzt.</p>
+    <p><strong>Urheberrecht</strong><br>Die Zusammenstellung und Aufbereitung der Inhalte unterliegt dem deutschen Urheberrecht. Namen, Marken und Logos der genannten Vereine und Anbieter gehören den jeweiligen Rechteinhabern.</p>
+    <h3 id="datenschutz">Datenschutzerklärung</h3>
+    <p><strong>Verantwortlicher</strong><br>Christian Jäger, Buch 3, 88285 Bodnegg, Deutschland, E-Mail: <a href="mailto:eiskalender@proton.me">eiskalender@proton.me</a></p>
+    <p><strong>Kurz gesagt</strong><br>Der Hockeykalender kommt ohne Anmeldung, ohne Cookies, ohne Tracking, ohne Werbung und ohne eingebundene Dienste Dritter (z.&nbsp;B. Schriften, Karten, Videos oder Statistik-Werkzeuge) aus. Der Betreiber speichert keine Daten von Besuchern.</p>
+    <p><strong>Bereitstellung der Seite (Hosting)</strong><br>Diese Seite wird über die Plattform claude.ai des Anbieters Anthropic bereitgestellt (Anthropic PBC, USA, bzw. für Europa Anthropic Ireland, Limited). Beim Aufruf verarbeitet der Anbieter technisch notwendige Zugriffsdaten, insbesondere IP-Adresse, Datum und Uhrzeit des Abrufs sowie Angaben zu Browser und Gerät. Der Betreiber dieses Kalenders hat auf diese Daten keinen Zugriff. Eine Verarbeitung außerhalb der EU, insbesondere in den USA, ist dabei möglich. Rechtsgrundlage ist das berechtigte Interesse an einer sicheren und zuverlässigen Bereitstellung des Angebots (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO). Einzelheiten stehen in der Datenschutzerklärung des Anbieters: <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">anthropic.com/legal/privacy</a>.</p>
+    <p><strong>Speicherung auf deinem Gerät</strong><br>Damit deine Filterauswahl (z.&nbsp;B. Altersklasse, Land, Suchbegriff) beim nächsten Besuch erhalten bleibt, wird sie im lokalen Speicher deines Browsers abgelegt. Diese Angaben bleiben auf deinem Gerät, werden nicht an den Betreiber übertragen und lassen sich jederzeit über „Filter zurücksetzen“ oder durch Löschen der Website-Daten im Browser entfernen.</p>
+    <p><strong>Merkliste „Beobachten“</strong><br>Die Funktion „Beobachten“ steht nur dem Betreiber zur Verfügung. Bei Besuchern, die bei claude.ai angemeldet sind, prüft die Seite lediglich, ob es sich um den Betreiber handelt. Daten von Besuchern werden dabei nicht gespeichert.</p>
+    <p><strong>Links zu anderen Websites</strong><br>Der Kalender verlinkt auf die Seiten der Veranstalter. Erst wenn du einen solchen Link anklickst, werden Daten an den jeweiligen Anbieter übertragen. Für die Datenverarbeitung dort ist der jeweilige Anbieter verantwortlich.</p>
+    <p><strong>Kontakt per E-Mail</strong><br>Wenn du eine E-Mail schreibst, werden deine Angaben (E-Mail-Adresse, Name und Inhalt der Nachricht) nur zur Bearbeitung deines Anliegens verwendet und anschließend gelöscht, sofern keine gesetzlichen Aufbewahrungspflichten bestehen. Das Postfach wird bei Proton Mail (Proton AG, Schweiz) geführt. Rechtsgrundlage ist Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO.</p>
+    <p><strong>Deine Rechte</strong><br>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch gegen die Verarbeitung (Art.&nbsp;15 bis 21 DSGVO). Dazu genügt eine E-Mail an die oben genannte Adresse. Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren. Zuständig für den Betreiber ist der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg.</p>
+    <p><strong>Stand</strong><br>November 2026</p>
+  </details>
+</div></footer>
+
+<script src="daten.js"></script>
+<script>
+const LANDNAME={DE:"Deutschland",AT:"Österreich",CH:"Schweiz",CZ:"Tschechien"};
+const AK=[["U9",2018,2019],["U11",2016,2017],["U13",2014,2015],["U15",2012,2013],["U17",2010,2011],["U20",2007,2009]];
+/* Position: G = nur Goalies, B = Feldspieler und Goalies, F = Feldspieler (auch wenn der Anbieter nichts angibt) */
+const GOALIE_RE=/goalie|torhüter|torwart|brankář|brankar|gólman|goaltend/i;
+const BEIDE_RE=/auch (für |fuer )?(torhüter|torhueter|goalies?|torwart)|goalies? und spieler|spieler und goalies?|feldspieler und goalies?|\+ ?torhüter|goalies? (chf|€|\d)|goalie \d|tägliches goalie|goalie-coach|save \+ sniper|auch torwarttraining|(skater|sniper) \+ top goalies/i;
+function posOf(e){var t=e.titel||"",n=[e.notiz,e.jgText,e.preis].join(" ");if(e.typ==="Goalie"||(GOALIE_RE.test(t)&&!/skater|sniper|spieler|stürmer/i.test(t)))return "G";if(BEIDE_RE.test(t+" "+n))return "B";return "F";}
+/* Laufschule: Einsteigerangebote (Eislauf-/Hockeyschulen, Schnuppertage). Feld kategorie:"Laufschule" hat Vorrang; Camps, Turniere, Powerskating und Goalie-Angebote zählen nie dazu */
+const LAUF_RE=/laufschule|eislaufschule|eislauf-?kurs|learn to skate|\bl2s\b|eiskindergarten|hockey-?schule|hockey school|školička|škola bruslení|skola brusleni|bruslen|kids on ice|kids ?day|schnupper|eisflitzer|initiation|bambini/i;
+function katOf(e){if(e.typ==="Tryout"||e.kategorie==="Tryout")return "O";if(e.kategorie==="Laufschule")return "L";if(e.typ==="Turnier")return "T";if(e.typ==="Camp")return "C";if(e.typ==="Goalie"&&/camp|kemp|clinic|tage|intensiv/i.test(e.titel||""))return "C";if(e.kategorie!=="keine Laufschule"&&e.typ!=="Powerskating"&&e.typ!=="Goalie"&&LAUF_RE.test(e.titel||""))return "L";return "F";}
+const EINZEL_RE=/einzelanmeldung feldspieler möglich|einzelanmeldung möglich|einzelbuchung (für feldspieler )?möglich/i;
+DATA.concat(LAUFEND,OHNE).forEach(function(e){e.pos=posOf(e);e.kat=katOf(e);var n=e.notiz||"";var m=n.match(/[^.;]*einzel(anmeldung|buchung)[^.;]*/i);e.einzel=EINZEL_RE.test(n)&&!(m&&/nicht möglich|keine/i.test(m[0]));});
+const MON=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const NA="nicht angegeben";
+const $=function(id){return document.getElementById(id);};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function todayISO(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fmt(iso){if(!iso||!/^\d{4}-\d\d-\d\d$/.test(iso))return iso||"";var p=iso.split("-");return p[2]+"."+p[1]+"."+p[0];}
+function fmtShort(iso){var p=iso.split("-");return p[2]+"."+p[1]+".";}
+function jgRange(e){var a=e.jg&&e.jg[0],b=e.jg&&e.jg[1];if(a==null&&b==null)return null;if(a==null)a=b;if(b==null)b=a;return [Math.min(a,b),Math.max(a,b)];}
+function akOf(e){var r=jgRange(e);if(!r)return [];return AK.filter(function(k){return r[0]<=k[2]&&r[1]>=k[1];}).map(function(k){return k[0];});}
+function fold(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ß/g,"ss");}
+function status(p){var s=(p||"").toLowerCase();if(/ausgebucht|voll\b|obsazeno|keine anmeldung|geschlossen|sold out/.test(s))return "full";if(/warteliste|waitlist/.test(s))return "wait";if(/frei|verfügbar|offen/.test(s))return "free";return "";}
+function val(x){return (x==null||x===""||x===NA)?'<dd class="na">nicht angegeben</dd>':"<dd>"+esc(x)+"</dd>";}
+/* Beobachten: Schlüssel je Eintrag (id, sonst aus Land, Anbieter und Titel) */
+function wkey(e){if(e.id)return String(e.id);return ("x-"+fold(e.land+"-"+e.anbieter+"-"+e.titel).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")).slice(0,120);}
+var WATCH={},WATCH_ON=false,WBUSY={},WSTORE="hk-watch";
+const SOON_RE=/coming soon|noch nicht (offen|geöffnet|freigeschaltet|buchbar|veröffentlicht)|anmeldung (folgt|ab |öffnet)|buchung evtl\. noch nicht offen|demnächst buchbar/i;
+function soon(e){if(e.anmeldung)return e.anmeldung==="demnaechst";return SOON_RE.test([e.plaetze,e.schluss,e.notiz].join(" "));}
+const BELL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+function bell(e){if(!WATCH_ON)return "";var k=wkey(e),on=!!WATCH[k];return '<button type="button" class="bell" data-watch="'+esc(k)+'" aria-pressed="'+on+'" title="'+(on?"Beobachtung beenden":"Bei Änderungen benachrichtigen")+'">'+BELL+(on?"Beobachtet":"Beobachten")+"</button>";}
+function wcls(e){return WATCH_ON&&WATCH[wkey(e)]?" watched":"";}
+/* Kalender-Export: ganztägiger Termin; Kurse über mehr als 14 Tage nur als Beginn-Termin */
+function addDay(iso,n){var d=new Date(iso+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function calEv(e){
+  var lang=(Date.parse(e.bis)-Date.parse(e.von))/864e5>14,has=function(x){return x&&x!==NA;};
+  var ort=(e.ort||"")+(has(e.halle)?", "+e.halle:"");
+  var t=["Anbieter: "+(e.anbieterVoll||e.anbieter)];
+  if(lang)t.push("Zeitraum: "+fmt(e.von)+" bis "+fmt(e.bis));
+  if(has(e.jgText))t.push("Jahrgänge: "+e.jgText);
+  if(has(e.preis))t.push("Preis: "+e.preis);
+  if(has(e.plaetze))t.push("Plätze: "+e.plaetze);
+  if(has(e.schluss))t.push("Anmeldeschluss: "+(/^\d{4}-\d\d-\d\d$/.test(e.schluss)?fmt(e.schluss):e.schluss));
+  if(e.url)t.push("Details und Anmeldung: "+e.url);
+  t.push("Quelle: Hockeykalender (Stand "+fmt(STAND)+"), Angaben ohne Gewähr.");
+  return {titel:(lang?"Beginn: ":"")+e.titel+" ("+e.anbieter+")",von:e.von,end:addDay(lang?e.von:e.bis,1),ort:ort,text:t.join("\n")};
+}
+function calLinks(e){
+  if(!e.id||!e.von||!e.bis)return "";
+  var c=calEv(e),q=encodeURIComponent,d=function(x){return x.replace(/-/g,"");},txt=c.text.length>900?c.text.slice(0,900)+" …":c.text;
+  var g="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+q(c.titel)+"&dates="+d(c.von)+"/"+d(c.end)+"&details="+q(txt)+"&location="+q(c.ort);
+  var o="https://outlook.live.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&allday=true&subject="+q(c.titel)+"&startdt="+c.von+"&enddt="+c.end+"&body="+q(txt)+"&location="+q(c.ort);
+  return '<div class="cal"><span>In Kalender speichern:</span><a href="'+esc(g)+'" target="_blank" rel="noopener">Google</a><a href="'+esc(o)+'" target="_blank" rel="noopener">Outlook</a></div>';
+}
+function link(u,t){return u?'<a class="go" href="'+esc(u)+'" target="_blank" rel="noopener">'+(t||"Zur Seite des Anbieters")+" ↗</a>":"";}
+
+/* Filter-Optionen */
+(function(){
+  var h='<button type="button" class="tb" data-ak="" aria-pressed="true">Alle</button>';AK.forEach(function(k){h+='<button type="button" class="tb" data-ak="'+k[0]+'" aria-pressed="false">'+k[0]+"<small>"+k[1]+"–"+String(k[2]).slice(2)+"</small></button>";});$("gAk").innerHTML=h;
+  var anb={};DATA.concat(LAUFEND,OHNE).forEach(function(e){anb[e.anbieter]=1;});
+  Object.keys(anb).sort(function(a,b){return a.localeCompare(b,"de");}).forEach(function(a){var o=document.createElement("option");o.value=a;o.textContent=a;$("fAnb").appendChild(o);});
+})();
+
+function matches(e,f,withDates){
+  if(f.watch&&!WATCH[wkey(e)])return false;
+  if(withDates){if(f.von&&e.bis<f.von)return false;if(f.bis&&e.von>f.bis)return false;}
+  if(f.land.length&&f.land.indexOf(e.land)<0)return false;
+  if(f.pos&&e.pos!==f.pos&&e.pos!=="B")return false;
+  if(f.anb&&e.anbieter!==f.anb)return false;
+  if(f.kat&&e.kat!==f.kat)return false;
+  var r=jgRange(e);
+  if(f.ak.length){
+    if(!r){if(!f.noJg)return false;}
+    else{
+      if(f.ak.length&&!AK.some(function(k){return f.ak.indexOf(k[0])>=0&&r[0]<=k[2]&&r[1]>=k[1];}))return false;
+    }
+  }
+  if(f.full&&withDates&&status(e.plaetze)==="full")return false;
+  if(f.q){var hay=[e.titel,e.anbieter,e.anbieterVoll,e.ort,e.halle,e.typ,e.notiz,LANDNAME[e.land],e.jgText].join(" ");hay=fold(hay);
+    if(f.q.split(/\s+/).some(function(w){return w&&hay.indexOf(w)<0;}))return false;}
+  return true;
+}
+
+function cardTermin(e){
+  var st=status(e.plaetze),ak=akOf(e),same=e.von===e.bis;
+  var date=same?fmtShort(e.von)+"<small>"+e.von.slice(0,4)+"</small>":fmtShort(e.von)+"<small>bis "+fmtShort(e.bis)+"</small>";
+  var chips='<span class="chip land">'+e.land+'</span>'+typChip(e)+laufChip(e)+posChip(e)+einzelChip(e)+ak.map(function(a){return '<span class="chip ak">'+a+"</span>";}).join("");
+  var unsure=/deutung|vermutlich/i.test(e.plaetze||"");if(st==="full")chips+='<span class="chip full">'+(unsure?"Vermutlich ausgebucht":"Ausgebucht")+'</span>';else if(st==="wait")chips+='<span class="chip wait">Warteliste</span>';else if(soon(e))chips+='<span class="chip soon">Anmeldung noch nicht offen</span>';
+  var ort=e.ort+(e.halle&&e.halle!==NA?", "+e.halle:"");
+  return '<article class="card'+(st==="full"?" full":"")+wcls(e)+'"><div class="chead"><div class="date">'+date+'</div><div class="ctitle"><h3>'+esc(e.titel)+'</h3><div class="who">'+esc(e.anbieter)+"</div></div>"+bell(e)+"</div>"+
+    '<div class="chips">'+chips+"</div><dl>"+
+    "<dt>Ort</dt>"+val(ort)+tryRows(e)+"<dt>Jahrgänge</dt>"+val(e.jgText)+"<dt>Preis</dt>"+val(e.preis)+"<dt>Plätze</dt>"+val(e.plaetze)+
+    "<dt>Anmeldeschluss</dt>"+val(/^\d{4}-\d\d-\d\d$/.test(e.schluss)?fmt(e.schluss):e.schluss)+
+    "<dt>Eis pro Tag</dt>"+val(e.eis)+"<dt>Trocken pro Tag</dt>"+val(e.trocken)+"</dl>"+
+    (e.notiz?'<div class="notiz">'+esc(e.notiz)+"</div>":"")+link(e.url,"Details und Anmeldung")+calLinks(e)+"</article>";
+}
+/* Tryouts: Auswahltrainings für ein bestimmtes Team oder Programm (keine Verbandssichtungen nur auf Einladung) */
+function typChip(e){return e.kat==="O"?'<span class="chip tryout">Tryout</span>':'<span class="chip">'+esc(e.typ)+"</span>";}
+function tryRows(e){return (e.fuer?"<dt>Auswahl für</dt>"+val(e.fuer):"")+(e.bewerbung?"<dt>Bewerbung</dt>"+val(e.bewerbung):"");}
+function laufChip(e){return e.kat==="L"?'<span class="chip lauf">Laufschule</span>':"";}
+function einzelChip(e){return e.einzel?'<span class="chip free">Einzelanmeldung möglich</span>':"";}
+function posChip(e){return (e.pos==="G"&&e.typ==="Goalie")?"":e.pos==="G"?'<span class="chip pos">Goalie</span>':e.pos==="B"?'<span class="chip pos">Feldspieler & Goalie</span>':"";}
+function cardLauf(e){
+  var ak=akOf(e);
+  return '<article class="card'+wcls(e)+'"><div class="hrow"><div class="ctitle"><h3>'+esc(e.titel)+'</h3><div class="who">'+esc(e.anbieterVoll||e.anbieter)+"</div></div>"+bell(e)+"</div>"+
+    '<div class="chips"><span class="chip land">'+e.land+'</span>'+typChip(e)+laufChip(e)+posChip(e)+einzelChip(e)+ak.map(function(a){return '<span class="chip ak">'+a+"</span>";}).join("")+"</div><dl>"+
+    "<dt>Ort</dt>"+val(e.ort)+tryRows(e)+"<dt>Jahrgänge</dt>"+val(e.jgText)+"<dt>Preis</dt>"+val(e.preis)+"<dt>Eis pro Tag</dt>"+val(e.eis)+"<dt>Trocken pro Tag</dt>"+val(e.trocken)+"</dl>"+
+    (e.notiz?'<div class="notiz">'+esc(e.notiz)+"</div>":"")+link(e.url)+"</article>";
+}
+function cardOhne(e){
+  return '<article class="card'+wcls(e)+'"><div class="hrow"><div class="ctitle"><h3>'+esc(e.titel)+'</h3><div class="who">'+esc(LANDNAME[e.land])+(e.ort&&e.ort!==NA?" · "+esc(e.ort):"")+"</div></div>"+bell(e)+"</div>"+(e.kat==="L"||e.kat==="O"?'<div class="chips">'+laufChip(e)+(e.kat==="O"?'<span class="chip tryout">Tryout</span>':"")+"</div>":"")+
+    (e.notiz?'<div class="notiz" style="border:0;padding:0">'+esc(e.notiz)+"</div>":"")+link(e.url)+"</article>";
+}
+
+var SEL={ak:[],pos:"",kat:"",land:[]};
+function syncBtns(){document.querySelectorAll("[data-ak]").forEach(function(b){var v=b.dataset.ak;b.setAttribute("aria-pressed",String(v?SEL.ak.indexOf(v)>=0:SEL.ak.length===0));});document.querySelectorAll("[data-pos]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.pos===SEL.pos));});document.querySelectorAll("[data-kat]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.kat===SEL.kat));});document.querySelectorAll("[data-land]").forEach(function(b){var v=b.dataset.land;b.setAttribute("aria-pressed",String(v?SEL.land.indexOf(v)>=0:SEL.land.length===0));});}
+function getF(){return {ak:SEL.ak.slice(),pos:SEL.pos,kat:SEL.kat,land:SEL.land.slice(),anb:$("fAnb").value,q:fold($("fQ").value.trim()),full:$("fFull").checked,noJg:$("fNoJg").checked,watch:WATCH_ON&&$("fWatch").checked,von:dRange()[0],bis:dRange()[1]};}
+/* Zeitraum: vertauschte Eingaben werden gedreht; gefiltert wird nur der Abschnitt „Termine“ */
+function dRange(){var a=$("fVon").value,b=$("fBis").value;return a&&b&&a>b?[b,a]:[a,b];}
+/* Termine seitenweise: render() setzt die Anzeige auf die ersten PAGE Termine zurück, draw() zeichnet ohne Zurücksetzen */
+const PAGE=30;var LIMIT=PAGE;
+function render(){LIMIT=PAGE;draw();}
+function draw(){
+  var f=getF(),t=todayISO();
+  var list=DATA.filter(function(e){return e.bis>=t&&matches(e,f,true);});
+  var html="",cur="";
+  list.slice(0,LIMIT).forEach(function(e){var m=e.von<t?t.slice(0,7):e.von.slice(0,7);if(m!==cur){if(cur)html+="</div>";cur=m;html+='<div class="month">'+MON[+m.slice(5,7)-1]+" "+m.slice(0,4)+'</div><div class="list">';}html+=cardTermin(e);});
+  if(cur)html+="</div>";
+  var rest=list.length-LIMIT;
+  if(rest>0)html+='<div class="more"><button type="button" data-more="'+PAGE+'">Weitere '+Math.min(PAGE,rest)+' anzeigen</button>'+(rest>PAGE?'<button type="button" class="all" data-more="all">Alle '+list.length+' anzeigen</button>':"")+"<span>"+Math.min(LIMIT,list.length)+" von "+list.length+" Terminen</span></div>";
+  $("tl").innerHTML=html||'<div class="empty">Keine Termine für diese Auswahl. Filter lockern oder zurücksetzen.</div>';
+  var ll=LAUFEND.filter(function(e){return matches(e,f,false);});
+  $("ll").innerHTML=ll.map(cardLauf).join("")||'<div class="empty">Keine laufenden Trainings für diese Auswahl.</div>';
+  var ol=OHNE.filter(function(e){return (!f.watch||WATCH[wkey(e)])&&(!f.kat||(f.kat==="T"?e.kat!=="L"&&/turnier|cup|turnaj/i.test(e.titel+" "+e.notiz):f.kat==="L"?e.kat==="L":f.kat==="O"?e.kat==="O":e.kat!=="L"&&e.kat!=="O"))&&(!f.land.length||f.land.indexOf(e.land)>=0)&&(!f.pos||e.pos===f.pos||e.pos==="B")&&(!f.anb||e.anbieter===f.anb)&&(!f.q||f.q.split(/\s+/).every(function(w){return fold(e.titel+" "+e.anbieter+" "+e.ort+" "+e.notiz).indexOf(w)>=0;}));});
+  $("ol").innerHTML=ol.map(cardOhne).join("")||'<div class="empty">Keine Einträge für diese Auswahl.</div>';
+  $("count").textContent=list.length+" Termine · "+ll.length+" laufend";
+  $("nLL").textContent="("+ll.length+")";$("nOL").textContent="("+ol.length+")";
+  try{localStorage.setItem("nek-filter",JSON.stringify(f));}catch(_){}
+}
+(function(){
+  try{var s=JSON.parse(localStorage.getItem("nek-filter")||"null");if(s){SEL.ak=Array.isArray(s.ak)?s.ak.filter(function(a){return AK.some(function(k){return k[0]===a;});}):[];SEL.pos=s.pos==="F"||s.pos==="G"?s.pos:"";SEL.kat=/^[CFLOT]$/.test(s.kat||"")?s.kat:"";SEL.land=Array.isArray(s.land)?s.land.filter(function(x){return /^(DE|AT|CH|CZ)$/.test(x);}):(/^(DE|AT|CH|CZ)$/.test(s.land||"")?[s.land]:[]);$("fAnb").value=s.anb||"";$("fQ").value=s.q||"";$("fFull").checked=!!s.full;$("fNoJg").checked=s.noJg!==false;var dOk=function(x){return /^\d{4}-\d\d-\d\d$/.test(x||"");};if(!(dOk(s.bis)&&s.bis<todayISO())){$("fVon").value=dOk(s.von)?s.von:"";$("fBis").value=dOk(s.bis)?s.bis:"";}}}catch(_){}
+  ["fAnb","fFull","fNoJg","fWatch","fVon","fBis"].forEach(function(id){$(id).addEventListener("change",render);});
+  document.querySelectorAll("[data-ak]").forEach(function(b){b.addEventListener("click",function(){var v=b.dataset.ak;if(!v)SEL.ak=[];else{var i=SEL.ak.indexOf(v);if(i>=0)SEL.ak.splice(i,1);else SEL.ak.push(v);}syncBtns();render();});});
+  document.querySelectorAll("[data-pos]").forEach(function(b){b.addEventListener("click",function(){SEL.pos=b.dataset.pos;syncBtns();render();});});
+  document.querySelectorAll("[data-land]").forEach(function(b){b.addEventListener("click",function(){var v=b.dataset.land;if(!v)SEL.land=[];else{var i=SEL.land.indexOf(v);if(i>=0)SEL.land.splice(i,1);else SEL.land.push(v);}syncBtns();render();});});
+  document.querySelectorAll("[data-kat]").forEach(function(b){b.addEventListener("click",function(){SEL.kat=b.dataset.kat;syncBtns();render();});});
+  syncBtns();
+  $("fQ").addEventListener("input",render);
+  $("reset").addEventListener("click",function(){["fAnb","fQ"].forEach(function(id){$(id).value="";});SEL.land=[];SEL.ak=[];SEL.pos="";SEL.kat="";syncBtns();$("fFull").checked=false;$("fNoJg").checked=true;$("fWatch").checked=false;$("fVon").value="";$("fBis").value="";render();});
+  var by={};DATA.concat(LAUFEND,OHNE).forEach(function(e){(by[e.land]=by[e.land]||{})[e.anbieter]=1;});
+  (function(){var t=todayISO(),C={};
+    function add(e,dated){var k=e.land+"|"+e.anbieter;var o=C[k]=C[k]||{land:e.land,name:e.anbieter,n:0,url:"",orte:{}};if(dated)o.n++;if(!o.url&&e.url)o.url=e.url;if(e.ort&&e.ort!==NA&&Object.keys(o.orte).length<3)o.orte[e.ort.split(/[,(]/)[0].trim()]=1;}
+    DATA.forEach(function(e){if(e.kat==="C"&&e.bis>=t)add(e,true);});
+    LAUFEND.forEach(function(e){if(e.kat==="C")add(e,false);});
+    OHNE.forEach(function(e){if(/camp|kemp|tábor|tabor|ferien|sommerkurs|clinic/i.test((e.titel||"")+" "+(e.notiz||"")))add(e,false);});
+    var by={};Object.keys(C).forEach(function(k){(by[C[k].land]=by[C[k].land]||[]).push(C[k]);});
+    $("campProv").innerHTML=["DE","AT","CH","CZ"].map(function(l){var a=(by[l]||[]).sort(function(x,y){return x.name.localeCompare(y.name,"de");});
+      return "<div><h4>"+LANDNAME[l]+" · "+a.length+"</h4><ul>"+a.map(function(o){var orte=Object.keys(o.orte).join(", ");
+        return '<li><button type="button" class="cn" data-camp="'+esc(o.name)+'">'+esc(o.name)+'</button><span class="cc">'+(o.n?o.n+(o.n===1?" Camp":" Camps"):"Termine folgen")+(orte?" · "+esc(orte):"")+"</span>"+(o.url?'<a href="'+esc(o.url)+'" target="_blank" rel="noopener">Website ↗</a>':"")+"</li>";}).join("")+"</ul></div>";}).join("");
+    document.querySelectorAll("[data-camp]").forEach(function(b){b.addEventListener("click",function(){$("fAnb").value=b.dataset.camp;SEL.kat="C";syncBtns();render();$("termine").scrollIntoView({behavior:"smooth"});});});
+  })();
+  $("prov").innerHTML=["DE","AT","CH","CZ"].map(function(l){return "<div><h4>"+LANDNAME[l]+"</h4><ul>"+Object.keys(by[l]||{}).sort(function(a,b){return a.localeCompare(b,"de");}).map(function(a){return "<li>"+esc(a)+"</li>";}).join("")+"</ul></div>";}).join("");
+  $("nCP").textContent="("+document.querySelectorAll("#campProv li").length+")";
+  $("nPV").textContent="("+document.querySelectorAll("#prov li").length+")";
+  document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-more]");if(!b)return;LIMIT=b.dataset.more==="all"?1e9:LIMIT+PAGE;draw();});
+  $("impLink").addEventListener("click",function(ev){ev.preventDefault();var d=$("impressum");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"});});
+  var tt=$("toTop"),onS=function(){tt.classList.toggle("show",window.scrollY>900);};window.addEventListener("scroll",onS,{passive:true});onS();
+  tt.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});
+  $("standTop").textContent="Stand: "+fmt(STAND);
+  $("standFoot").innerHTML="<strong>Stand der Recherche:</strong> "+fmt(STAND)+". Alle Angaben ohne Gewähr, maßgeblich sind die Seiten der Anbieter. Angaben mit „vermutlich“, „ca.“ oder „Einschätzung“ stehen so nicht wörtlich auf der Seite des Anbieters, sondern sind aus dessen Angaben erschlossen.";
+  render();
+  initWatch();
+})();
+
+/* Beobachten: Merkliste nur im Browser dieses Geräts (localStorage, Schlüssel "hk-watch").
+   Es wird nichts an einen Server übertragen. Ist der Speicher gesperrt, bleibt die Liste bis zum Neuladen erhalten. */
+function wFind(k){var all=DATA.concat(LAUFEND,OHNE);for(var i=0;i<all.length;i++){if(wkey(all[i])===k)return all[i];}return null;}
+function wSnap(e){return {titel:e.titel||"",anbieter:e.anbieter||"",land:e.land||"",url:e.url||"",von:e.von||"",bis:e.bis||"",preis:e.preis||"",plaetze:e.plaetze||"",schluss:e.schluss||"",anmeldung:soon(e)?"demnaechst":(status(e.plaetze)||"unbekannt")};}
+function wLoad(){try{var s=window.localStorage.getItem(WSTORE);var o=s?JSON.parse(s):{};return (o&&typeof o==="object"&&!Array.isArray(o))?o:{};}catch(_){return {};}}
+function wSave(){try{window.localStorage.setItem(WSTORE,JSON.stringify(WATCH));return true;}catch(_){return false;}}
+function wCount(){$("watchN").textContent="("+Object.keys(WATCH).length+")";}
+function initWatch(){
+  try{
+    WATCH=wLoad();WATCH_ON=true;document.querySelector(".filters").classList.add("watchon");wCount();
+    document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-watch]");if(b)toggleWatch(b.dataset.watch);});
+    window.addEventListener("storage",function(ev){if(ev.key===WSTORE){WATCH=wLoad();wCount();draw();}});
+    render();
+  }catch(_){}
+}
+function toggleWatch(k){
+  if(WBUSY[k])return;WBUSY[k]=1;$("watchMsg").textContent="";
+  try{
+    if(WATCH[k])delete WATCH[k];
+    else{var e=wFind(k);if(!e)return;var s=wSnap(e);WATCH[k]={key:k,titel:s.titel,anbieter:s.anbieter,land:s.land,url:s.url,seit:todayISO(),letzterStand:s};}
+    if(!wSave())$("watchMsg").textContent="Merkliste kann in diesem Browser nicht dauerhaft gespeichert werden.";
+    wCount();draw();
+  }catch(_){$("watchMsg").textContent="Speichern hat nicht geklappt, bitte erneut versuchen.";}
+  finally{delete WBUSY[k];}
+}
+</script>
+
+
+</body></html>
