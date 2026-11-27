@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}header.top .hdrart{position:absolute;right:max(16px,calc((100% - 1100px)/2 + 190px));bottom:0;height:100%;width:430px;pointer-events:none;z-index:0}@media (max-width:760px){header.top .hdrart{right:0;width:62%;opacity:.6}}
 h1 .tld{text-transform:none;color:#fff;font-size:.5em;font-style:italic;letter-spacing:.02em;margin-left:.06em;vertical-align:.62em;opacity:.95}.sub.slogan{font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.03em;color:#fff;font-size:1.02em}.sub.slogan span{white-space:nowrap}.sub.slogan b{color:#ff5a4f}.sub2{margin-top:4px;opacity:.75;font-size:.9em}.chip.land{text-transform:none;letter-spacing:0;display:inline-flex;align-items:center;gap:5px}.flag{width:16px;height:11px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.18);flex:none;vertical-align:-1px}.who .flag{margin-right:5px}.fmini{display:none}
 @media (min-width:761px){
-.filters.mini .wrap{display:none}
+.filters.fix{position:fixed;top:0;left:0;right:0;overflow-anchor:none}.filters.mini .wrap{display:none}
 .filters.mini .fmini{display:flex;align-items:center;gap:12px;max-width:1100px;margin:0 auto;padding:8px 16px}
 .fmini .ftog{font:inherit;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em;background:var(--blue);color:var(--bg);border:0;border-radius:6px;padding:8px 14px;cursor:pointer;white-space:nowrap}
 .fmini .fchips{display:flex;gap:6px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;min-width:0;font-size:12px;color:var(--muted)}
@@ -448,16 +448,18 @@ function toggleWatch(k){
 </script>
 
 
-<script>/* Desktop: Filterleiste beim Scrollen auf eine Zeile einklappen */(function(){var F=document.querySelector('.filters');if(!F)return;var open=false,openY=0,y0=0,tog=document.getElementById('fTog'),qm=document.getElementById('fQmini'),q=document.getElementById('fQ');
+<script>/* Desktop: Filterleiste beim Scrollen auf eine Zeile einklappen. Ein Platzhalter hält die Höhe, damit die Seite nicht springt. */(function(){var F=document.querySelector('.filters');if(!F)return;var S=document.createElement('div');S.className='fspace';F.parentNode.insertBefore(S,F);
+var open=false,openY=0,y0=0,H=0,tog=document.getElementById('fTog'),qm=document.getElementById('fQmini'),q=document.getElementById('fQ');
 function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function chips(){var c=[];F.querySelectorAll('.tg .tb[aria-pressed=true]').forEach(function(b){if(b.dataset.land===''||b.dataset.kat===''||b.dataset.pos===''||/^alle$/i.test(b.textContent.trim()))return;c.push(b.textContent.trim().replace(/\s+/g,' '))});
 var a=document.getElementById('fAnb');if(a&&a.value)c.push(a.value);if(document.getElementById('fVon').value||document.getElementById('fBis').value)c.push('Zeitraum');if(document.getElementById('fFull').checked)c.push('ohne Ausgebuchte');
 document.getElementById('fChips').innerHTML=c.length?c.map(function(x){return '<span>'+esc(x)+'</span>'}).join(''):'<span>keine Filter aktiv</span>';
 tog.textContent='Filter'+(c.length?' ('+c.length+')':'')+' ▾';var n=document.getElementById('count');document.getElementById('fCnt').textContent=n?n.textContent:'';if(document.activeElement!==qm)qm.value=q?q.value:'';}
-function upd(){var m=window.innerWidth>760&&window.scrollY>y0+40&&!open;if(m)chips();F.classList.toggle('mini',m);tog.setAttribute('aria-expanded',m?'false':'true');}
-function base(){var was=F.classList.contains('mini');F.classList.remove('mini');y0=F.getBoundingClientRect().top+window.scrollY;F.classList.toggle('mini',was);}
-window.addEventListener('load',function(){base();upd()});window.addEventListener('resize',function(){base();upd()});
-window.addEventListener('scroll',function(){if(open&&(window.scrollY<y0+40||Math.abs(window.scrollY-openY)>400))open=false;upd()},{passive:true});
-tog.addEventListener('click',function(){open=true;openY=window.scrollY;F.classList.remove('mini');tog.setAttribute('aria-expanded','true')});
+function measure(){var f=F.classList.contains('fix'),m=F.classList.contains('mini');F.classList.remove('fix','mini');S.style.height='0';y0=F.getBoundingClientRect().top+window.scrollY;H=F.offsetHeight;F.classList.toggle('fix',f);F.classList.toggle('mini',m);if(f)S.style.height=H+'px';}
+function upd(){var desk=window.innerWidth>760,past=desk&&window.scrollY>y0+H;if(!past)open=false;if(open&&Math.abs(window.scrollY-openY)>400)open=false;
+var m=past&&!open;if(m)chips();F.classList.toggle('fix',past);F.classList.toggle('mini',m);S.style.height=past?H+'px':'0';tog.setAttribute('aria-expanded',m?'false':'true');}
+window.addEventListener('load',function(){measure();upd()});window.addEventListener('resize',function(){measure();upd()});
+window.addEventListener('scroll',upd,{passive:true});
+tog.addEventListener('click',function(){open=true;openY=window.scrollY;upd()});
 qm.addEventListener('input',function(){if(!q)return;q.value=qm.value;q.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(chips,50)});
 F.addEventListener('click',function(){setTimeout(chips,50)});})();</script></body></html>
