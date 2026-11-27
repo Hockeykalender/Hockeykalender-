@@ -192,7 +192,7 @@ h2::before{content:"";position:absolute;left:0;top:.12em;bottom:.12em;width:6px;
 
 <main><div class="wrap">
   <section id="termine"><h2>Termine</h2><p class="h2note">Nach Datum sortiert. Vergangene Termine verschwinden automatisch. „nicht angegeben“ heißt, dass der Anbieter dazu nichts veröffentlicht hat.</p><div id="tl"></div></section>
-  <details id="laufend" class="sec"><summary><h2>Laufend buchbare Trainings <span class="n" id="nLL"></span></h2></summary><p class="h2note">Regelmäßige Trainings, Hockeyschulen und Privatstunden ohne festen Einzeltermin.</p><div class="list" id="ll"></div></details>
+  <details id="laufend" class="sec"><summary><h2><span id="hLL">Laufend buchbare Angebote</span> <span class="n" id="nLL"></span></h2></summary><p class="h2note" id="pLL">Regelmäßige Trainings, Hockeyschulen und Privatstunden ohne festen Einzeltermin.</p><div class="list" id="ll"></div></details>
   <details id="ohne" class="sec"><summary><h2>Nächster Termin noch nicht veröffentlicht <span class="n" id="nOL"></span></h2></summary><p class="h2note">Anbieter mit Camps oder Kursen, deren nächste Termine noch nicht online stehen.</p><div class="ohne" id="ol"></div></details>
   <details id="campanbieter" class="sec"><summary><h2>Alle Camp-Anbieter <span class="n" id="nCP"></span></h2></summary><p class="h2note">Alle erfassten Anbieter mit Camps, nach Land sortiert. Ein Klick auf den Namen zeigt oben nur die Camps dieses Anbieters. Anbieter ohne aktuellen Termin stehen mit „Termine folgen“ in der Liste.</p><div class="prov camps" id="campProv"></div></details>
 </div></main>
@@ -361,7 +361,15 @@ function draw(){
   if(rest>0)html+='<div class="more"><button type="button" data-more="'+PAGE+'">Weitere '+Math.min(PAGE,rest)+' anzeigen</button>'+(rest>PAGE?'<button type="button" class="all" data-more="all">Alle '+list.length+' anzeigen</button>':"")+"<span>"+Math.min(LIMIT,list.length)+" von "+list.length+" Terminen</span></div>";
   $("tl").innerHTML=html||'<div class="empty">Keine Termine für diese Auswahl. Filter lockern oder zurücksetzen.</div>';
   var ll=LAUFEND.filter(function(e){return matches(e,f,false);});
-  $("ll").innerHTML=ll.map(cardLauf).join("")||'<div class="empty">Keine laufenden Trainings für diese Auswahl.</div>';
+  var LT={"":["Laufend buchbare Angebote","Regelmäßige Trainings, Hockeyschulen, Privatstunden und Tryouts ohne festen Einzeltermin.","Keine laufend buchbaren Angebote für diese Auswahl."],
+    C:["Laufend buchbare Camps","Camps ohne festen Einzeltermin.","Keine laufend buchbaren Camps für diese Auswahl."],
+    O:["Tryouts – Bewerbung jederzeit","Diese Vereine nehmen das ganze Jahr Bewerbungen an. Den Termin für das Tryout vereinbarst du direkt mit dem Verein.","Keine Tryouts mit Bewerbung jederzeit für diese Auswahl."],
+    F:["Laufend buchbare Trainings","Regelmäßige Trainings, Hockeyschulen und Privatstunden ohne festen Einzeltermin.","Keine laufenden Trainings für diese Auswahl."],
+    L:["Laufend buchbare Laufschulen","Laufschulen ohne festen Einzeltermin – Einstieg meist jederzeit möglich.","Keine laufend buchbaren Laufschulen für diese Auswahl."],
+    T:["Weitere Turniere","Turniere ohne festen Einzeltermin.","Keine weiteren Turniere für diese Auswahl."]}[f.kat||""]||null;
+  if(!LT)LT=["Laufend buchbare Angebote","Ohne festen Einzeltermin.","Keine laufend buchbaren Angebote für diese Auswahl."];
+  $("hLL").textContent=LT[0];$("pLL").textContent=LT[1];
+  $("ll").innerHTML=ll.map(cardLauf).join("")||'<div class="empty">'+LT[2]+'</div>';
   var ol=OHNE.filter(function(e){return (!f.watch||WATCH[wkey(e)])&&(!f.kat||(f.kat==="T"?e.kat!=="L"&&/turnier|cup|turnaj/i.test(e.titel+" "+e.notiz):f.kat==="L"?e.kat==="L":f.kat==="O"?e.kat==="O":e.kat!=="L"&&e.kat!=="O"))&&(!f.land.length||f.land.indexOf(e.land)>=0)&&(!f.pos||e.pos===f.pos||e.pos==="B")&&(!f.anb||e.anbieter===f.anb)&&(!f.q||f.q.split(/\s+/).every(function(w){return fold(e.titel+" "+e.anbieter+" "+e.ort+" "+e.notiz).indexOf(w)>=0;}));});
   $("ol").innerHTML=ol.map(cardOhne).join("")||'<div class="empty">Keine Einträge für diese Auswahl.</div>';
   $("count").textContent=list.length+" Termine · "+ll.length+" laufend";
