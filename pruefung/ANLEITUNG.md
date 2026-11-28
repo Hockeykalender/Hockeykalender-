@@ -23,6 +23,9 @@ Diese Anleitung wird von der geplanten Aufgabe „Hockeykalender: tägliche Prü
 - Helfer: `python3 pruefung/set.py <id> <feld> <wert>`, `python3 pruefung/add.py '<json>'`, `sh pruefung/version.sh`.
 - Test: `python3 pruefung/test.py <repo-pfad>`. Nur Umami-Ladefehler (ERR_TUNNEL_CONNECTION_FAILED) sind ok. Vorher alte `http.server` beenden (`pkill -f http.server`).
 
+## Seiten finden über die Websuche
+Christian möchte bei der Prüfung nichts bestätigen müssen. Gespeicherte Adressen direkt abzurufen löst jedes Mal eine Freigabe aus. Darum gilt: Jeden Anbieter zuerst über WebSearch suchen (Name plus Stichwort, zum Beispiel „nxtmove Camps 2027“ oder „EHC Waldkraiburg Eislaufschule“). Dann nur Seiten mit WebFetch öffnen, die die Suche geliefert hat, am besten die Seite, die der gespeicherten Adresse entspricht. Liefert die Suche keine passende Seite, den Anbieter als „nicht prüfbar (Suche)“ im Bericht nennen. Gespeicherte Adressen nicht direkt abrufen und keine anderen Umwege nutzen. Unbeantwortete Freigabe-Abfragen sofort stehen lassen und weitermachen. Im Bericht zählen: geprüft, nicht prüfbar, Freigaben ausgelöst.
+
 ## Ablauf
 1. Christian per SendUserMessage kurz sagen, dass die Prüfung startet: Wochentag und was heute dran ist.
 2. Repository holen und aktualisieren (`git pull`). Vergangene Einträge entfernen, also Einträge in `DATA` mit `bis` vor heute.
