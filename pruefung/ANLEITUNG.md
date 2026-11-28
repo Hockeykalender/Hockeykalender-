@@ -43,6 +43,12 @@ Beide Läufe machen Schritt 1, 2 und 8 bis 11. Was der andere Lauf heute schon g
 2. Repository holen und aktualisieren (`git pull`). Vergangene Einträge entfernen, also Einträge in `DATA` mit `bis` vor heute.
 3. Alle Camps, Turniere und freien Trainings mit Termin in den nächsten 6 Wochen auf der Anbieterseite prüfen: ausgebucht, abgesagt, verschoben, freie Plätze, neue Termine. Gibt es eine Übersichtsseite für viele Termine, diese nutzen statt jede Einzelseite.
 4. Fest jeden Tag: nxtmove (Sheet-Zeile 606), auf Wunsch von Christian, egal wie weit die Termine entfernt sind.
+4b. Fest jeden Tag: TCC sportovní služby (Sheet-Zeile 411), auf Wunsch von Christian (28.11.2026). Die Websuche findet TCC nicht. Darum gilt NUR für TCC eine Ausnahme von „Seiten finden über die Websuche“: Diese vier Übersichtsseiten direkt mit WebFetch öffnen.
+   - https://www.tcc-sportovnisluzby.cz/de/rezervace/kempy/ (Wochenend-Skills-Camps)
+   - https://www.tcc-sportovnisluzby.cz/de/rezervace/eishockeycamp-wochentlich/ (Mehrtagescamps)
+   - https://www.tcc-sportovnisluzby.cz/de/rezervace/trainings/ (Einzeltrainings)
+   - https://www.tcc-sportovnisluzby.cz/de/rezervace/torwart-wochenende-skills-eishockey-camp/ (Torwart-Camps)
+   Dabei kann eine Freigabe-Abfrage kommen. Christian bestätigt sie selbst mit „Immer erlauben“. Wird eine Seite nicht freigegeben oder kommt eine Sperre (z. B. PROVENANCE_REQUIRED), diese Seite überspringen, keinen anderen Weg versuchen und es im Bericht nennen. Neue Termine eintragen (Einzeltrainings als typ "Training", Camps als typ "Camp", Land CZ, Ort Plzeň, Halle Studentská 2143/117, Plzeň-Bolevec), geänderte Termine anpassen. Einzelne Termin-Seiten nur öffnen, wenn die Übersicht etwas Wichtiges nicht zeigt.
 5. Laufschulen des heutigen Wochentags aus `laufschulen_woche.json`. Änderungen in `LAUFEND` per URL bearbeiten.
 6. NUR MONTAG und DONNERSTAG: alle Camp- und Turnier-Anbieter mit Terminen später als 6 Wochen sowie die Anbieter ohne Termin (OhneTermin > 0).
 7. AM 1. JEDES MONATS: `nicht_lesbar.json` erneut versuchen.
