@@ -146,6 +146,12 @@ button.bell svg{width:15px;height:15px}
 .filters.watchon .row2 .watchbar{display:flex}
 #watchMsg{font-size:12.5px;color:var(--bad)}
 /* Kalender-Export je Termin */
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px}
+.share{font:inherit;font-size:13px;font-weight:600;color:var(--blue);background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:34px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.share svg{width:15px;height:15px}
+.gp{font-size:12px;color:#1a7f37;display:inline-flex;gap:4px;align-items:center}
+.gp svg{width:13px;height:13px}
+.card:target{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
 .cal{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:center;font-size:12.5px;color:var(--muted)}
 .cal a{font:inherit;font-weight:600;color:var(--blue);background:none;border:0;padding:6px 0;min-height:30px;cursor:pointer;text-decoration:none}
 .cal a:hover{text-decoration:underline}
@@ -243,7 +249,7 @@ h2::before{content:"";position:absolute;left:0;top:.12em;bottom:.12em;width:6px;
   </details>
 </div></footer>
 
-<script src="daten.js?v=202611281318"></script>
+<script src="daten.js?v=202611281330"></script>
 <script>
 const LANDNAME={DE:"Deutschland",AT:"Österreich",CH:"Schweiz",CZ:"Tschechien"};
 const AK=[["U9",2018,2019],["U11",2016,2017],["U13",2014,2015],["U15",2012,2013],["U17",2010,2011],["U20",2007,2009]];
@@ -291,12 +297,28 @@ function calEv(e){
   t.push("Quelle: Hockeykalender (Stand "+fmt(STAND)+"), Angaben ohne Gewähr.");
   return {titel:(lang?"Beginn: ":"")+e.titel+" ("+e.anbieter+")",von:e.von,end:addDay(lang?e.von:e.bis,1),ort:ort,text:t.join("\n")};
 }
+
+function gpDate(e){if(typeof GEPRUEFT==="undefined"||!e.url)return "";var h=uHost(e.url).replace(/^www\./,"");for(var k in GEPRUEFT){if(h===k.replace(/^www\./,""))return GEPRUEFT[k];}return "";}
+function gpLine(e){var d=gpDate(e);if(!d)return "";var t=d===new Date().toISOString().slice(0,10)?"heute":fmt(d);return '<span class="gp">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>'+'Vom Hockeykalender geprüft: '+t+'</span>';}
+function shareBtn(e){return e.id?'<button type="button" class="share" data-share="'+esc(e.id)+'">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>'+'Teilen</button>':"";}
+function findE(id){for(var i=0;i<DATA.length;i++)if(DATA[i].id===id)return DATA[i];return null;}
+function icsFor(e){var c=calEv(e),d=function(x){return x.replace(/-/g,"");},z=function(x){return x.replace(/\\/g,"\\\\").replace(/;/g,"\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");};
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Hockeykalender//DE","BEGIN:VEVENT","UID:"+e.id+"@hockeykalender","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z","DTSTART;VALUE=DATE:"+d(c.von),"DTEND;VALUE=DATE:"+d(c.end),"SUMMARY:"+z(c.titel),"LOCATION:"+z(c.ort),"DESCRIPTION:"+z(c.text),"END:VEVENT","END:VCALENDAR"].join("\r\n");}
+document.addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-share]");
+  if(b){var e=findE(b.dataset.share);if(!e)return;var url=location.href.split("#")[0]+"#t-"+e.id,txt=e.titel+" – "+fmt(e.von)+(e.von!==e.bis?" bis "+fmt(e.bis):"")+", "+e.ort;
+    if(navigator.share){navigator.share({title:e.titel,text:txt,url:url}).catch(function(){});}
+    else{window.open("https://wa.me/?text="+encodeURIComponent(txt+"\n"+url),"_blank","noopener");}
+    if(window.umami)umami.track("Teilen");return;}
+  var c=ev.target.closest("[data-ics]");
+  if(c){ev.preventDefault();var e2=findE(c.dataset.ics);if(!e2)return;var blob=new Blob([icsFor(e2)],{type:"text/calendar"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="hockeykalender-"+e2.id+".ics";document.body.appendChild(a);a.click();a.remove();}
+});
 function calLinks(e){
   if(!e.id||!e.von||!e.bis)return "";
   var c=calEv(e),q=encodeURIComponent,d=function(x){return x.replace(/-/g,"");},txt=c.text.length>900?c.text.slice(0,900)+" …":c.text;
   var g="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+q(c.titel)+"&dates="+d(c.von)+"/"+d(c.end)+"&details="+q(txt)+"&location="+q(c.ort);
   var o="https://outlook.live.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&allday=true&subject="+q(c.titel)+"&startdt="+c.von+"&enddt="+c.end+"&body="+q(txt)+"&location="+q(c.ort);
-  return '<div class="cal"><span>In Kalender speichern:</span><a href="'+esc(g)+'" target="_blank" rel="noopener">Google</a><a href="'+esc(o)+'" target="_blank" rel="noopener">Outlook</a></div>';
+  return '<div class="cal"><span>In Kalender speichern:</span><a href="'+esc(g)+'" target="_blank" rel="noopener">Google</a><a href="'+esc(o)+'" target="_blank" rel="noopener">Outlook</a><a href="#" data-ics="'+esc(e.id)+'">iOS</a></div>';
 }
 function uHost(u){try{return new URL(u).hostname.replace(/^www\./,"");}catch(_){return "";}}
 function link(u,t){return u?'<a class="go" href="'+esc(u)+'" target="_blank" rel="noopener" data-umami-event="Anbieter-Link" data-umami-event-ziel="'+esc(uHost(u))+'">'+(t||"Zur Seite des Anbieters")+" ↗</a>":"";}
@@ -335,12 +357,12 @@ function cardTermin(e){
   var chips='<span class="chip land">'+flagge(e.land)+esc(LANDNAME[e.land]||e.land)+'</span>'+typChip(e)+laufChip(e)+posChip(e)+einzelChip(e)+ak.map(function(a){return '<span class="chip ak">'+a+"</span>";}).join("");
   var unsure=/deutung|vermutlich/i.test(e.plaetze||"");if(st==="full")chips+='<span class="chip full">'+(unsure?"Vermutlich ausgebucht":"Ausgebucht")+'</span>';else if(st==="wait")chips+='<span class="chip wait">Warteliste</span>';else if(soon(e))chips+='<span class="chip soon">Anmeldung noch nicht offen</span>';
   var ort=e.ort+(e.halle&&e.halle!==NA?", "+e.halle:"");
-  return '<article class="card'+(st==="full"?" full":"")+wcls(e)+'"><div class="chead"><div class="date">'+date+'</div><div class="ctitle"><h3>'+esc(e.titel)+'</h3><div class="who">'+esc(e.anbieter)+"</div></div>"+bell(e)+"</div>"+
+  return '<article id="t-'+esc(e.id)+'" class="card'+(st==="full"?" full":"")+wcls(e)+'"><div class="chead"><div class="date">'+date+'</div><div class="ctitle"><h3>'+esc(e.titel)+'</h3><div class="who">'+esc(e.anbieter)+"</div></div>"+bell(e)+"</div>"+
     '<div class="chips">'+chips+"</div><dl>"+
     "<dt>Ort</dt>"+val(ort)+tryRows(e)+"<dt>Jahrgänge</dt>"+val(e.jgText)+"<dt>Preis</dt>"+val(e.preis)+"<dt>Plätze</dt>"+val(e.plaetze)+
     "<dt>Anmeldeschluss</dt>"+val(/^\d{4}-\d\d-\d\d$/.test(e.schluss)?fmt(e.schluss):e.schluss)+
     "<dt>Eis pro Tag</dt>"+val(e.eis)+"<dt>Trocken pro Tag</dt>"+val(e.trocken)+"</dl>"+
-    (e.notiz?'<div class="notiz">'+esc(e.notiz)+"</div>":"")+link(e.url,"Details und Anmeldung")+calLinks(e)+"</article>";
+    (e.notiz?'<div class="notiz">'+esc(e.notiz)+"</div>":"")+link(e.url,"Details und Anmeldung")+calLinks(e)+'<div class="acts">'+shareBtn(e)+gpLine(e)+"</div></article>";
 }
 /* Tryouts: Auswahltrainings für ein bestimmtes Team oder Programm (keine Verbandssichtungen nur auf Einladung) */
 function typChip(e){return e.kat==="O"?'<span class="chip tryout">Tryout</span>':'<span class="chip">'+esc(e.typ)+"</span>";}
@@ -474,4 +496,11 @@ window.addEventListener('load',function(){measure();upd()});window.addEventListe
 window.addEventListener('scroll',upd,{passive:true});
 tog.addEventListener('click',function(){open=true;openY=window.scrollY;upd()});
 qm.addEventListener('input',function(){if(!q)return;q.value=qm.value;q.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(chips,50)});
-F.addEventListener('click',function(){setTimeout(chips,50)});})();</script></body></html>
+F.addEventListener('click',function(){setTimeout(chips,50)});})();</script><script>
+/* Entwurf: geteilter Link #t-<id> zeigt und markiert den Termin */
+window.addEventListener("load",function(){var m=location.hash.match(/^#t-(.+)$/);if(!m)return;var id="t-"+m[1],n=0;
+  var grow=function(){while(!document.getElementById(id)&&n++<60&&LIMIT<DATA.length){LIMIT+=PAGE;draw();}};grow();
+  if(!document.getElementById(id)){$("reset").click();n=0;grow();}
+  var el=document.getElementById(id);if(el){el.scrollIntoView({block:"center"});}});
+</script>
+</body></html>
